@@ -85,6 +85,14 @@ NodoBPlusBase* NodoBInterno::getHijo(int i) {
 void NodoBInterno::setHijo(int i, NodoBPlusBase* hijo) {
     punteros[i] = hijo;
 }
+
+void NodoBInterno::desplazarHijosDerechaDesde(int pos) {
+    // Desplazar punteros a hijos desde posición pos hacia la derecha
+    // (order+1 punteros, no solo orden)
+    for (int i = cantidad_claves + 1; i > pos; i--) {
+        punteros[i] = punteros[i - 1];
+    }
+}
 void NodoBInterno::setPadre(NodoBInterno* p) {
     padre = p;
 }

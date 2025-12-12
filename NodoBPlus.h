@@ -46,6 +46,7 @@ public:
     int buscar_siguiente(int clave);
     NodoBPlusBase* getHijo(int i);
     void setHijo(int i, NodoBPlusBase* hijo);
+    void desplazarHijosDerechaDesde(int pos);  // desplaza punteros a hijos
     void setPadre(NodoBInterno*);
     NodoBInterno* getPadre();
 };

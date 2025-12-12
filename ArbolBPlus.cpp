@@ -41,7 +41,6 @@ NodoGrafo* ArbolBPlus::buscar(int clave) {
 // ===================== INSERCIÓN ======================
 
 void ArbolBPlus::insertar(int clave, NodoGrafo* dato) {
-
     NodoBHoja* hoja = buscarHoja(clave);
 
     // Si aún hay espacio en la hoja
@@ -80,7 +79,7 @@ void ArbolBPlus::splitHoja(NodoBHoja* hoja, int clave, NodoGrafo* dato) {
     int total = orden + 1;   // claves que estarán momentáneamente todas juntas
     int mitad = total / 2;
 
-    // Arreglos temporales (sin STL)
+    // Arreglos temporales
     int* claves_temp = new int[total];
     NodoGrafo** datos_temp = new NodoGrafo*[total];
 
@@ -104,27 +103,20 @@ void ArbolBPlus::splitHoja(NodoBHoja* hoja, int clave, NodoGrafo* dato) {
     claves_temp[pos] = clave;
     datos_temp[pos] = dato;
 
-    // 2. Repartir claves entre hoja izquierda y hoja derecha
-    hoja->incrementarCantidadClaves();
+    hoja->setCantidadClaves(0);
 
-    nueva->incrementarCantidadClaves();
-
-
-    // izquierda (hoja original)
+    // izquierda (hoja original): copiar primeras mitad claves
     for (int i = 0; i < mitad; i++) {
         hoja->insertarClaveEnPos(claves_temp[i], i);
         hoja->setDato(i, datos_temp[i]);
     }
-    hoja->setCantidadClaves(mitad);
 
-
-    // derecha (nueva hoja)
-    for (int i = mitad; i < total; i++) {
-        int j = i - mitad;
-        nueva->insertarClaveEnPos(claves_temp[i], j);
-        nueva->setDato(j, datos_temp[i]);
+    // derecha (nueva hoja): copiar resto de claves
+    int cantidad_derecha = total - mitad;
+    for (int i = 0; i < cantidad_derecha; i++) {
+        nueva->insertarClaveEnPos(claves_temp[mitad + i], i);
+        nueva->setDato(i, datos_temp[mitad + i]);
     }
-    nueva->setCantidadClaves(hoja->getCantidadClaves() - mitad);
 
 
     // 3. Ajustar enlaces entre hojas
@@ -137,14 +129,13 @@ void ArbolBPlus::splitHoja(NodoBHoja* hoja, int clave, NodoGrafo* dato) {
     delete[] claves_temp;
     delete[] datos_temp;
 
-    // 4. Caso especial: la hoja era la raíz
+    // 4. la hoja era la raíz
     if (hoja == raiz) {
 
         NodoBInterno* nueva_raiz = new NodoBInterno(orden);
 
         nueva_raiz->insertarClaveEnPos(clave_promovida, 0);
         nueva_raiz->setCantidadClaves(1);
-
 
         nueva_raiz->setHijo(0, hoja);
         hoja->setPadre(nueva_raiz);
@@ -155,16 +146,12 @@ void ArbolBPlus::splitHoja(NodoBHoja* hoja, int clave, NodoGrafo* dato) {
         return;
     }
 
-    // 5. Si no era la raíz → insertar clave en el padre
-    NodoBPlusBase* actual = raiz;
-    NodoBInterno* padre = nullptr;
+    // 5. Si no era la raíz: insertar clave en el padre (ya lo tiene asignado)
+    NodoBInterno* padre = (NodoBInterno*)hoja->getPadre();
 
-    // Buscar el padre de la hoja
-    while (!actual->esHoja()) {
-        NodoBInterno* interno = (NodoBInterno*)actual;
-        int pos_hijo = interno->buscar_siguiente(clave);
-        padre = interno;
-        actual = interno->getHijo(pos_hijo);
+    if (!padre) {
+        cout << "ERROR: Hoja sin padre (situación inconsistente)\n";
+        return;
     }
 
     // Insertar clave promovida en el padre
@@ -172,6 +159,7 @@ void ArbolBPlus::splitHoja(NodoBHoja* hoja, int clave, NodoGrafo* dato) {
 
         int pos_i = padre->buscar_siguiente(clave_promovida);
         padre->desplazarDerechaDesde(pos_i);
+        padre->desplazarHijosDerechaDesde(pos_i + 1);  
 
         padre->insertarClaveEnPos(clave_promovida, pos_i);
 
@@ -180,8 +168,6 @@ void ArbolBPlus::splitHoja(NodoBHoja* hoja, int clave, NodoGrafo* dato) {
         return;
     }
 
-    // si padre está lleno → split del nodo interno
-    splitInterno(padre, clave_promovida);
 }
 
 NodoBInterno* ArbolBPlus::splitInterno(NodoBInterno* interno, int& clave_median){
@@ -199,20 +185,52 @@ NodoBInterno* ArbolBPlus::splitInterno(NodoBInterno* interno, int& clave_median)
     int idxNuevo = 0;
     for (int i = mitad + 1; i < total; i++) {
         nuevoInterno->insertarClaveEnPos(interno->getClave(i), idxNuevo);
-        nuevoInterno->incrementarCantidadClaves();
         idxNuevo++;
     }
+    nuevoInterno->setCantidadClaves(total - mitad - 1);
 
-    // Copiar punteros
-    // Punteros 0..mitad van al nodo original
-    // Punteros mitad+1..total van al nuevo nodo
+    // Copiar punteros: mitad+1..total van al nuevo nodo
+    // total+1 punteros en un nodo interno (orden+1)
     for (int i = mitad + 1; i <= total; i++) {
-        nuevoInterno->setHijo(i - (mitad + 1), interno->getHijo(i));
-        interno->getHijo(i)->setPadre(nuevoInterno);
+        if (i < orden + 1) {  // seguridad: no acceder fuera del arreglo
+            nuevoInterno->setHijo(i - (mitad + 1), interno->getHijo(i));
+            if (interno->getHijo(i)) {
+                interno->getHijo(i)->setPadre(nuevoInterno);
+            }
+        }
     }
 
     // Ajustar cantidad claves del nodo original (izquierdo)
     interno->setCantidadClaves(mitad);
 
+    // Si este nodo es la raíz → crear nueva raíz
+    if (interno == raiz) {
+        NodoBInterno* nueva_raiz = new NodoBInterno(orden);
+        nueva_raiz->insertarClaveEnPos(clave_median, 0);
+        nueva_raiz->setCantidadClaves(1);
+        nueva_raiz->setHijo(0, interno);
+        nueva_raiz->setHijo(1, nuevoInterno);
+        interno->setPadre(nueva_raiz);
+        nuevoInterno->setPadre(nueva_raiz);
+        raiz = nueva_raiz;
+        return nuevoInterno;
+    }
+
+    // Si no es raíz → insertar clave_median en el padre
+    NodoBInterno* padre = (NodoBInterno*)interno->getPadre();
+    if (!padre) return nuevoInterno;  // seguridad
+
+    if (padre->getCantidadClaves() < orden) {
+        int pos = padre->buscar_siguiente(clave_median);
+        padre->desplazarDerechaDesde(pos);
+        padre->insertarClaveEnPos(clave_median, pos);
+        padre->setHijo(pos + 1, nuevoInterno);
+        nuevoInterno->setPadre(padre);
+        return nuevoInterno;
+    }
+
+    // Si el padre también está lleno → split recursivo
+    int clave_med_padre = 0;
+    splitInterno(padre, clave_med_padre);
     return nuevoInterno;
 }
