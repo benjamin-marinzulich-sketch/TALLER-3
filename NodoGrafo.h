@@ -12,6 +12,7 @@ public:
 
     int get_id() const;
     void agregar_padre(int padre_id);
+    void eliminar_padre(int padre_id);
 
     virtual bool es_directorio() = 0;
     virtual vector<int> lista_hijos(); 
@@ -30,6 +31,7 @@ public:
     bool es_directorio() override { return true; }
     void agregar_hijo(int hijo_id);
     vector<int> lista_hijos() override;
+    void eliminar_hijo(int hijo_id);
 };
 
 // ---------------------------------------

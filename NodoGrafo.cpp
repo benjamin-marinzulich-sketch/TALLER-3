@@ -13,6 +13,13 @@ void NodoGrafo::agregar_padre(int padre_id) {
     padres.push_back(padre_id);
 }
 
+void NodoGrafo::eliminar_padre(int padre_id) {
+    for (auto it = padres.begin(); it != padres.end(); ) {
+        if (*it == padre_id) it = padres.erase(it);
+        else ++it;
+    }
+}
+
 std::vector<int> NodoGrafo::lista_padres() {
     return padres;
 }
@@ -31,6 +38,13 @@ void NodoDirectorio::agregar_hijo(int hijo_id) {
 
 std::vector<int> NodoDirectorio::lista_hijos() {
     return hijos;
+}
+
+void NodoDirectorio::eliminar_hijo(int hijo_id) {
+    for (auto it = hijos.begin(); it != hijos.end(); ) {
+        if (*it == hijo_id) it = hijos.erase(it);
+        else ++it;
+    }
 }
 
 // ===== NodoArchivo =====

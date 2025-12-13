@@ -73,7 +73,7 @@ NodoBInterno::~NodoBInterno() {
 
 int NodoBInterno::buscar_siguiente(int clave) {
     int i = 0;
-    while (i < cantidad_claves && clave > claves[i])
+    while (i < cantidad_claves && clave >= claves[i])
         i++;
     return i;
 }

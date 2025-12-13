@@ -10,6 +10,11 @@ ArbolBPlus::ArbolBPlus(int _orden)
     raiz = new NodoBHoja(orden); // al inicio solo existe una hoja
 }
 
+// Getter para la raíz 
+NodoBPlusBase* ArbolBPlus::getRaiz() const {
+    return raiz;
+}
+
 // ===================== BÚSQUEDA ======================
 
 NodoBHoja* ArbolBPlus::buscarHoja(int clave) {
@@ -123,7 +128,7 @@ void ArbolBPlus::splitHoja(NodoBHoja* hoja, int clave, NodoGrafo* dato) {
     nueva->setSiguiente(hoja->getSiguiente());
     hoja->setSiguiente(nueva);
 
-    // clave promovida = primera clave de la hoja nueva
+    
     int clave_promovida = nueva->getClave(0);
 
     delete[] claves_temp;

@@ -13,6 +13,8 @@ public:
 
     void insertar(int clave, NodoGrafo* dato);
     NodoGrafo* buscar(int clave);
+    // getter para la raíz (necesario para búsquedas con contador de accesos)
+    NodoBPlusBase* getRaiz() const;
 
 private:
     NodoBHoja* buscarHoja(int clave);
